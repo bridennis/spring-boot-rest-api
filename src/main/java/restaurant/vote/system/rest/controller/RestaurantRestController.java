@@ -26,14 +26,23 @@ public class RestaurantRestController {
     private final VoteRepository voteRepository;
     private final DishRepository dishRepository;
     private final UserRepository userRepository;
+    private final VoteResultRepository voteResultRepository;
 
     @Autowired
-    public RestaurantRestController(RestaurantRepository restaurantRepository, MenuRepository menuRepository, VoteRepository voteRepository, DishRepository dishRepository, UserRepository userRepository) {
+    public RestaurantRestController(
+            RestaurantRepository restaurantRepository,
+            MenuRepository menuRepository,
+            VoteRepository voteRepository,
+            DishRepository dishRepository,
+            UserRepository userRepository,
+            VoteResultRepository voteResultRepository
+    ) {
         this.restaurantRepository = restaurantRepository;
         this.menuRepository = menuRepository;
         this.voteRepository = voteRepository;
         this.dishRepository = dishRepository;
         this.userRepository = userRepository;
+        this.voteResultRepository = voteResultRepository;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -68,23 +77,72 @@ public class RestaurantRestController {
 
             User user = userRepository.findByLogin(principal.getName()).orElse(null);
 
-            // restaurant MUST exists and MUST be in menu
-            Restaurant restaurant = restaurantRepository.findOne(restaurantId);
-            if (restaurant != null) {
-                restaurant = menuRepository.findByRestaurant(restaurant).map(r -> { return r.getRestaurant(); }).orElse(null);
-            }
-            if (restaurant == null) {
-                throw new ResourceNotFoundException();
-            } else {
-                vote = voteRepository.findByUser(user).orElse(null);
+            if (user != null) {
 
-                if (vote != null) {
-                    vote.setRestaurant(restaurant);
-                } else {
-                    vote = new Vote(user, restaurant);
+                // restaurant MUST exists and MUST be in menu
+
+                Restaurant restaurant = restaurantRepository.findOne(restaurantId);
+                if (restaurant != null) {
+                    restaurant = menuRepository.findByRestaurant(restaurant).map(r -> {
+                        return r.getRestaurant();
+                    }).orElse(null);
                 }
-                voteRepository.save(vote);
 
+                if (restaurant == null) {
+                    throw new ResourceNotFoundException();
+                } else {
+                    vote = voteRepository.findByUser(user).orElse(null);
+
+                    if (vote != null) {
+
+                        // Пользователь уже голосовал
+
+                        Restaurant legacyRestaurant = vote.getRestaurant();
+
+                        if (legacyRestaurant != restaurant) {
+
+                            vote.setRestaurant(restaurant);
+
+                            // Обновляем счетчик голосования (уменьшаем в предыдущем, увеличиваем в новом)
+
+                            VoteResult voteResult = voteResultRepository.findByRestaurant(legacyRestaurant).orElse(null);
+
+                            if (voteResult != null) {
+                                voteResult.setCounter(voteResult.getCounter() > 0 ? voteResult.getCounter() - 1 : 0);
+                                voteResultRepository.save(voteResult);
+                            }
+
+                            voteResult = voteResultRepository.findByRestaurant(restaurant).orElse(null);
+
+                            if (voteResult == null) {
+                                voteResult = new VoteResult(restaurant, 1L);
+                            } else {
+                                voteResult.setCounter(voteResult.getCounter() + 1);
+                            }
+                            voteResultRepository.save(voteResult);
+
+                        }
+
+                    } else {
+
+                        // Проголосовал новый пользователь
+
+                        vote = new Vote(user, restaurant);
+
+                        // Обновляем счетчик голосования
+
+                        VoteResult voteResult = voteResultRepository.findByRestaurant(restaurant).orElse(null);
+
+                        if (voteResult == null) {
+                            voteResult = new VoteResult(restaurant, 1L);
+                        } else {
+                            voteResult.setCounter(voteResult.getCounter() + 1);
+                        }
+                        voteResultRepository.save(voteResult);
+                    }
+                    voteRepository.save(vote);
+
+                }
             }
 
         }
@@ -156,8 +214,8 @@ public class RestaurantRestController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/votes/results")
-    public void totalVotes() {
-
+    public Collection<VoteResult> votesResult() {
+        return  voteResultRepository.findAll();
     }
 
 }
