@@ -71,7 +71,7 @@ public class RestaurantRestController {
 
         // permit only before 11:00
 
-        LocalTime time = LocalTime.of(11, 00);
+        LocalTime time = LocalTime.of(11, 0);
 
         if (LocalTime.now().isBefore(time)) {
 
@@ -83,9 +83,7 @@ public class RestaurantRestController {
 
                 Restaurant restaurant = restaurantRepository.findOne(restaurantId);
                 if (restaurant != null) {
-                    restaurant = menuRepository.findByRestaurant(restaurant).map(r -> {
-                        return r.getRestaurant();
-                    }).orElse(null);
+                    restaurant = menuRepository.findByRestaurant(restaurant).map(Menu::getRestaurant).orElse(null);
                 }
 
                 if (restaurant == null) {
@@ -204,6 +202,7 @@ public class RestaurantRestController {
     @RequestMapping(method = RequestMethod.DELETE, value = "/votes")
     public ResponseEntity<?> votesDel() {
         voteRepository.deleteAll();
+        voteResultRepository.deleteAll();
         return ResponseEntity.ok().build();
     }
 
