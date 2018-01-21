@@ -62,7 +62,7 @@ public class RestaurantRestController {
 
         // permit only before 11:00
 
-        LocalTime time = LocalTime.of(11, 0);
+        LocalTime time = LocalTime.of(11, 00);
 
         if (LocalTime.now().isBefore(time)) {
 
@@ -131,7 +131,7 @@ public class RestaurantRestController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @RequestMapping(method = RequestMethod.DELETE, value = "/menus")
+    @RequestMapping(method = RequestMethod.DELETE, value = "/menus/all")
     public ResponseEntity<?> menusDel() {
         menuRepository.deleteAll();
         return ResponseEntity.ok().build();

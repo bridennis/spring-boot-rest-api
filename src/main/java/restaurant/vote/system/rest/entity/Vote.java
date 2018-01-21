@@ -19,9 +19,6 @@ public class Vote {
     @OneToOne
     private Restaurant restaurant;
 
-    private String userName;
-    private String restaurantName;
-
     public Vote() {
     }
 
@@ -48,14 +45,6 @@ public class Vote {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getUserName() {
-        return user.getLogin();
-    }
-
-    public String getRestaurantName() {
-        return restaurant.getName();
     }
 
 }

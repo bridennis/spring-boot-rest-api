@@ -70,7 +70,7 @@ REST API
         <td>удалить текущие результаты голосования</td>
     </tr>
     <tr>
-        <td>/restaurants/menus</td>
+        <td>/restaurants/menus/all</td>
         <td>-</td>
         <td>-</td>
         <td>-</td>
@@ -181,7 +181,7 @@ curl -v -u admin:admin -X DELETE http://127.0.0.1:8080/restaurants/votes
 
 очистить текущее меню ресторанов<sup>2</sup> (если необходимо)
 ```code
-curl -v -u admin:admin -X DELETE http://127.0.0.1:8080/restaurants/menus
+curl -v -u admin:admin -X DELETE http://127.0.0.1:8080/restaurants/menus/all
 ```
 
 - Шаг 1: Сформировать новое меню ресторана
