@@ -1,7 +1,5 @@
 package restaurant.vote.system.rest.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import javax.persistence.*;
 
 @Entity
@@ -11,12 +9,10 @@ public class Vote {
     @GeneratedValue
     private Long id;
 
-    //@JsonIgnore
     @OneToOne
     private User user;
 
-    ///@JsonIgnore
-    @OneToOne
+    @ManyToOne
     private Restaurant restaurant;
 
     public Vote() {
