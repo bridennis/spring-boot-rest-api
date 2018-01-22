@@ -1,4 +1,4 @@
-/**
+/*
  * Restaurant REST controller
  */
 
@@ -152,7 +152,7 @@ public class RestaurantRestController {
     @RequestMapping(method = RequestMethod.POST, value = "/{restaurantId}/dish/{dishId}")
     public Collection<Menu> addDish(@Valid @PathVariable Long restaurantId, @Valid @PathVariable Long dishId) {
 
-        Restaurant restaurant = restaurantRepository.findById(dishId).orElseThrow(ResourceNotFoundException::new);
+        Restaurant restaurant = restaurantRepository.findById(restaurantId).orElseThrow(ResourceNotFoundException::new);
         Dish dish = dishRepository.findById(dishId).orElseThrow(ResourceNotFoundException::new);
 
         menuRepository.save(new Menu(dish, restaurant));
@@ -215,6 +215,24 @@ public class RestaurantRestController {
     @RequestMapping(method = RequestMethod.GET, value = "/votes/results")
     public Collection<VoteResult> votesResult() {
         return  voteResultRepository.findAll();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @RequestMapping(method = RequestMethod.DELETE, value = "/{restaurantId}/dish/{dishId}")
+    public ResponseEntity<?> menusItemDel(@Valid @PathVariable Long restaurantId, @Valid @PathVariable Long dishId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId).orElse(null);
+        Dish dish = dishRepository.findById(dishId).orElse(null);
+        if (restaurant != null && dish != null) {
+            return menuRepository
+                    .findByRestaurantAndDish(restaurant, dish)
+                    .map(menu -> {
+                        menuRepository.delete(menu);
+                        return ResponseEntity.ok().build();
+                    })
+                    .orElseThrow(ResourceNotFoundException::new);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }
