@@ -235,4 +235,12 @@ public class RestaurantRestController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @RequestMapping(method = RequestMethod.DELETE)
+    public ResponseEntity<?> restaurantsDel() {
+        restaurantRepository.deleteAll();
+        return ResponseEntity.ok().build();
+    }
+
+
 }
