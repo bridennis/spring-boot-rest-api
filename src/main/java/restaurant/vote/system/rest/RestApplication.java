@@ -53,9 +53,9 @@ public class RestApplication {
 
 		Map<String, Integer> dishes = new HashMap<>();
 
-		int priceMin = 50, priceMax = 100 * 100;	// !!! price in cents
+		final int priceMin = 50, priceMax = 100 * 100;	// !!! price in cents
 		for (int i = 1; i <= 10; i++) {
-			dishes.put("dish" + i, (priceMin + (int)(Math.random() * ((priceMax - priceMin) + 1))));
+			dishes.put("dish" + i, (priceMin + (int)(Math.random() * ((priceMax - priceMin) + 1))) / 10 * 10);
 		}
 
 		return (args) -> dishes.forEach(
