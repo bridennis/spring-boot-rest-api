@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import restaurant.vote.system.rest.entity.*;
 import restaurant.vote.system.rest.repository.*;
+import restaurant.vote.system.rest.service.RestaurantService;
 
 import javax.validation.Valid;
 import java.security.Principal;
@@ -25,8 +26,8 @@ public class RestaurantRestController {
     private final MenuRepository menuRepository;
     private final VoteRepository voteRepository;
     private final DishRepository dishRepository;
-    private final UserRepository userRepository;
     private final VoteResultRepository voteResultRepository;
+    private final RestaurantService restaurantService;
 
     @Autowired
     public RestaurantRestController(
@@ -34,15 +35,15 @@ public class RestaurantRestController {
             MenuRepository menuRepository,
             VoteRepository voteRepository,
             DishRepository dishRepository,
-            UserRepository userRepository,
-            VoteResultRepository voteResultRepository
+            VoteResultRepository voteResultRepository,
+            RestaurantService restaurantService
     ) {
         this.restaurantRepository = restaurantRepository;
         this.menuRepository = menuRepository;
         this.voteRepository = voteRepository;
         this.dishRepository = dishRepository;
-        this.userRepository = userRepository;
         this.voteResultRepository = voteResultRepository;
+        this.restaurantService = restaurantService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -66,86 +67,7 @@ public class RestaurantRestController {
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(method = RequestMethod.POST, value = "/{restaurantId}/vote")
     public Vote updateVote(@Valid @PathVariable Long restaurantId, Principal principal) {
-
-        Vote vote = null;
-
-        // permit only before 11:00
-
-        LocalTime time = LocalTime.of(11, 0);
-
-        if (LocalTime.now().isBefore(time)) {
-
-            User user = userRepository.findByLogin(principal.getName()).orElse(null);
-
-            if (user != null) {
-
-                // restaurant MUST exists and MUST be in menu
-
-                Restaurant restaurant = restaurantRepository.findOne(restaurantId);
-                if (restaurant != null) {
-                    restaurant = menuRepository.findByRestaurant(restaurant).map(Menu::getRestaurant).orElse(null);
-                }
-
-                if (restaurant == null) {
-                    throw new ResourceNotFoundException();
-                } else {
-                    vote = voteRepository.findByUser(user).orElse(null);
-
-                    if (vote != null) {
-
-                        // Пользователь уже голосовал
-
-                        Restaurant legacyRestaurant = vote.getRestaurant();
-
-                        if (legacyRestaurant != restaurant) {
-
-                            vote.setRestaurant(restaurant);
-
-                            // Обновляем счетчик голосования (уменьшаем в предыдущем, увеличиваем в новом)
-
-                            VoteResult voteResult = voteResultRepository.findByRestaurant(legacyRestaurant).orElse(null);
-
-                            if (voteResult != null) {
-                                voteResult.setCounter(voteResult.getCounter() > 0 ? voteResult.getCounter() - 1 : 0);
-                                voteResultRepository.save(voteResult);
-                            }
-
-                            voteResult = voteResultRepository.findByRestaurant(restaurant).orElse(null);
-
-                            if (voteResult == null) {
-                                voteResult = new VoteResult(restaurant, 1L);
-                            } else {
-                                voteResult.setCounter(voteResult.getCounter() + 1);
-                            }
-                            voteResultRepository.save(voteResult);
-
-                        }
-
-                    } else {
-
-                        // Проголосовал новый пользователь
-
-                        vote = new Vote(user, restaurant);
-
-                        // Обновляем счетчик голосования
-
-                        VoteResult voteResult = voteResultRepository.findByRestaurant(restaurant).orElse(null);
-
-                        if (voteResult == null) {
-                            voteResult = new VoteResult(restaurant, 1L);
-                        } else {
-                            voteResult.setCounter(voteResult.getCounter() + 1);
-                        }
-                        voteResultRepository.save(voteResult);
-                    }
-                    voteRepository.save(vote);
-
-                }
-            }
-
-        }
-
-        return vote;
+        return restaurantService.vote(restaurantId, principal);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
