@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/bridennis/spring-boot-rest-api.svg?branch=master)](https://travis-ci.org/bridennis/spring-boot-rest-api)
+
 Проект голосования: restaurant lunch menu of the day
 ====================================================
 
