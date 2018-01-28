@@ -1,9 +1,12 @@
 package restaurant.vote.system.rest.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.*;
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.NotBlank;
 
 import javax.persistence.*;
+
+import static com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY;
 
 @Entity
 public class User {
@@ -12,15 +15,17 @@ public class User {
     @GeneratedValue
     private Long id;
 
+    @NotBlank
     @Length(min = 1, max = 32)
     @Column(unique=true)
     private String login;
 
-    @JsonIgnore
+    @NotBlank
+    @JsonProperty(access = WRITE_ONLY)
     @Length(min = 4, max = 32)
     private String password;
 
-    @JsonIgnore
+    @JsonProperty(access = WRITE_ONLY)
     @Enumerated(EnumType.STRING)
     private Role role;
 
